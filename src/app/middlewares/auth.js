@@ -22,8 +22,6 @@ export default async (req, res, next) => {
     // Incluir id do usuário na requisição para o método de update
     req.userId = decoded.id;
 
-    console.log(req.userId);
-
     return next();
   } catch (error) {
     return res.status(401).json({ error: 'Token inválido' });
