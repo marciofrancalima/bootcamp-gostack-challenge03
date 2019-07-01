@@ -41,10 +41,34 @@ class MeetupController {
   }
 
   async update(req, res) {
-    // O usuário também deve poder editar todos dados de meetups que ainda
-    // não aconteceram e que ele é organizador.
+    // Busca meetup no banco de dados
+    const meetup = await Meetup.findByPk(req.params.id);
 
-    return res.json();
+    // Verifica se meetup existe
+    if (!meetup) {
+      return res.status(400).json({ error: 'Meetup não existe' });
+    }
+
+    // Verifica se o meetup pertence ao usuário logado
+    if (meetup.user_id !== req.userId) {
+      return res.status(401).json({ error: 'Acesso não autorizado' });
+    }
+
+    // Não pode editar meetup com data que já passou
+    if (isBefore(parseISO(req.body.date), new Date())) {
+      return res.status(400).json({ error: 'Data inválida' });
+    }
+
+    // Não pode editar um meetup que já passou
+    if (meetup.past) {
+      return res
+        .status(400)
+        .json({ error: 'Não é possível editar meetup que já passou' });
+    }
+
+    await meetup.update(req.body);
+
+    return res.json(meetup);
   }
 }
 
