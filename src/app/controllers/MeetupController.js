@@ -1,3 +1,4 @@
+import * as Yup from 'yup';
 import {
   isBefore,
   startOfHour,
@@ -46,6 +47,19 @@ class MeetupController {
   }
 
   async store(req, res) {
+    const schema = Yup.object().shape({
+      title: Yup.string().required('O título é obrigatório'),
+      file_id: Yup.number().required('O arquivo é obrigatório'),
+      description: Yup.string().required('A descrição é obrigatório'),
+      location: Yup.string().required('A localização é obrigatório'),
+      date: Yup.date().required('A data é obrigatório'),
+    });
+
+    // Verifica se os dados informados estão válidos
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Preencha os dados corretamente' });
+    }
+
     // Não pode cadastrar meetup com uma data que já passou
     const startHour = startOfHour(parseISO(req.body.date));
 
