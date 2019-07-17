@@ -17,7 +17,7 @@ class MeetupController {
     const where = {};
     const page = req.query.page || 1;
 
-    // Se for passado a data, ajustar filtro
+    // If the date has passed, set filter
     if (req.query.date) {
       const searchDate = parseISO(req.query.date);
 
@@ -48,62 +48,62 @@ class MeetupController {
 
   async store(req, res) {
     const schema = Yup.object().shape({
-      title: Yup.string().required('O título é obrigatório'),
-      file_id: Yup.number().required('O arquivo é obrigatório'),
-      description: Yup.string().required('A descrição é obrigatório'),
-      location: Yup.string().required('A localização é obrigatório'),
-      date: Yup.date().required('A data é obrigatório'),
+      title: Yup.string().required('Title is required'),
+      file_id: Yup.number().required('File is required'),
+      description: Yup.string().required('Description is required'),
+      location: Yup.string().required('Location is required'),
+      date: Yup.date().required('Date is required'),
     });
 
-    // Verifica se os dados informados estão válidos
+    // Checks if the given data is valid
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Preencha os dados corretamente' });
+      return res.status(400).json({ error: 'Enter the data correctly' });
     }
 
-    // Não pode cadastrar meetup com uma data que já passou
+    // You can not register meetup with a date that has passed
     const startHour = startOfHour(parseISO(req.body.date));
 
     if (isBefore(startHour, new Date())) {
       return res
         .status(400)
-        .json({ error: 'A data que está tentando cadastrar já passou' });
+        .json({ error: 'The date you are trying to register has passed' });
     }
 
-    // Pega o usuário logado
+    // Get the user logged in
     const user_id = req.userId;
 
     const meetup = await Meetup.create({
-      ...req.body, // salva todos os campos vindo da requisição
-      user_id, // salva o id do usuário que cadastrou o meetup
+      ...req.body, // saves all fields from the request
+      user_id, // save the id of the user who registered the meetup
     });
 
     return res.json(meetup);
   }
 
   async update(req, res) {
-    // Busca meetup no banco de dados
+    // Search meetup in the database
     const meetup = await Meetup.findByPk(req.params.id);
 
-    // Verifica se meetup existe
+    // Checks if meetup exists
     if (!meetup) {
-      return res.status(400).json({ error: 'Meetup não existe' });
+      return res.status(400).json({ error: 'Meetup does not exists' });
     }
 
-    // Verifica se o meetup pertence ao usuário logado
+    // Checks if the meetup belongs to the logged in user
     if (meetup.user_id !== req.userId) {
-      return res.status(401).json({ error: 'Acesso não autorizado' });
+      return res.status(401).json({ error: 'Unauthorized access' });
     }
 
-    // Não pode editar meetup com data que já passou
+    // Can not edit meetup with date that has passed
     if (isBefore(parseISO(req.body.date), new Date())) {
-      return res.status(400).json({ error: 'Data inválida' });
+      return res.status(400).json({ error: 'Invalid date' });
     }
 
-    // Não pode editar um meetup que já passou
+    // You can not edit a meetup that has passed
     if (meetup.past) {
       return res
         .status(400)
-        .json({ error: 'Não é possível editar meetup que já passou' });
+        .json({ error: 'Can not edit meetup that has passed' });
     }
 
     await meetup.update(req.body);
@@ -112,30 +112,29 @@ class MeetupController {
   }
 
   async delete(req, res) {
-    // Busca meetup no banco de dados
+    // Search meetup in the database
     const meetup = await Meetup.findByPk(req.params.id);
 
-    // Verifica se meetup existe
+    // Checks if meetup exists
     if (!meetup) {
-      return res.status(400).json({ error: 'Meetup não existe' });
+      return res.status(400).json({ error: 'Meetup does not exists' });
     }
 
-    // Verifica se o meetup pertence ao usuário logado
+    // Checks if the meetup belongs to the logged in user
     if (meetup.user_id !== req.userId) {
-      return res.status(401).json({ error: 'Acesso não autorizado' });
+      return res.status(401).json({ error: 'Unauthorized access' });
     }
 
-    // Verifica se o usuário está tentando deletar um meetup já realizado
+    // Checks if user is trying to delete a meetup already done
     if (meetup.past) {
       return res
         .status(400)
-        .json({ error: 'Não pode deletar meetups realizados' });
+        .json({ error: 'Can not delete completed meetups' });
     }
 
-    // Exclui do banco de dados
     await meetup.destroy();
 
-    return res.json({ message: 'Meetup excluído com sucesso' });
+    return res.json({ message: 'Successfully deleted Meetup' });
   }
 }
 

@@ -22,7 +22,7 @@ class Meetup extends Model {
     return this;
   }
 
-  // Associando os relacionamentos de Meetups com os models
+  // Associating Meetups relationships with models
   static associate(models) {
     this.belongsTo(models.File, { foreignKey: 'file_id' });
     this.belongsTo(models.User, { foreignKey: 'user_id' });

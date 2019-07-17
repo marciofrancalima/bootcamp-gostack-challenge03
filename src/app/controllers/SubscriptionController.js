@@ -26,7 +26,7 @@ class SubscriptionController {
           attributes: ['id', 'title', 'description', 'location', 'date'],
         },
       ],
-      order: [[Meetup, 'date']], // Ordenar por meetups mais próximos
+      order: [[Meetup, 'date']],
     });
 
     return res.json(subscriptions);
@@ -37,24 +37,26 @@ class SubscriptionController {
       include: [User],
     });
 
-    // Verifica se meetup existe
+    // Checks if meetup exists
     if (!meetup) {
-      return res.status(400).json({ error: 'Informe um meetup válido' });
+      return res.status(400).json({ error: 'Enter a valid meetup' });
     }
 
-    // Verifica se o meetup pertence ao usuário logado
+    // Checks if the meetup belongs to the logged in user
     if (meetup.user_id === req.userId) {
       return res
         .status(400)
-        .json({ error: 'Você não pode se inscrever no meetup que organiza' });
+        .json({ error: 'You can not sign up for the meetup that organizes' });
     }
 
-    // Verifica se meetup já aconteceu
+    // Checks if meetup has already happened
     if (meetup.past) {
-      return res.status(400).json({ error: 'Esse meetup já aconteceu' });
+      return res
+        .status(400)
+        .json({ error: 'This meetup has already happened' });
     }
 
-    // Verifica se usuário já está inscrito no meetup
+    // Checks if user is already enrolled in meetup
     const checkSubscription = await Subscription.findOne({
       where: {
         meetup_id: req.params.meetupId,
@@ -63,10 +65,10 @@ class SubscriptionController {
     });
 
     if (checkSubscription) {
-      return res.status(400).json({ error: 'Você já está cadastrado' });
+      return res.status(400).json({ error: 'You are already registered' });
     }
 
-    // Verifica se usuário está inscrito em algum meetup na mesma data/hora
+    // Checks if user is enrolled in a meetup on the same date/time
     const sameTime = await Subscription.findOne({
       where: { user_id: req.userId },
       include: [
@@ -78,12 +80,11 @@ class SubscriptionController {
     });
 
     if (sameTime) {
-      return res
-        .status(400)
-        .json({ error: 'Você já está inscrito nesse horário em outro meetup' });
+      return res.status(400).json({
+        error: 'You are already enrolled at this time in another meetup',
+      });
     }
 
-    // Inscreve o usuário logado no meetup informado
     const subscription = await Subscription.create({
       meetup_id: req.params.meetupId,
       user_id: req.userId,
@@ -91,13 +92,13 @@ class SubscriptionController {
 
     const user = await User.findByPk(req.userId);
 
-    // Salva a notificação
+    // Saves notification
     await Notification.create({
       content: `Nova inscrição de ${user.name} para meetapp [${meetup.title}]`,
       user: req.userId,
     });
 
-    // Enviar notificação por email para o organizador do meetup
+    // Send email notification to meetup organizer
     await Queue.add(SubscriptionMail.key, {
       meetup,
       user,

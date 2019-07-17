@@ -18,7 +18,7 @@ const upload = multer(multerConfig);
 routes.post('/users', UserController.store);
 routes.post('/sessions', SessionController.store);
 
-// As rotas abaixo precisam de autenticação do usuário
+// The routes below require user authentication
 routes.use(authMiddleware);
 
 // Users

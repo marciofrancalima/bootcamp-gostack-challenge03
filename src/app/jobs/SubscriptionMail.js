@@ -12,7 +12,7 @@ class SubscriptionMail {
     const { meetup, user } = data;
     await Mail.sendMail({
       to: `${meetup.User.name} <${meetup.User.email}>`,
-      subject: `Nova inscrição para meetapp [${meetup.title}]`,
+      subject: `New subscription for meetapp [${meetup.title}]`,
       template: 'subscription',
       context: {
         organizer: meetup.User.name,
@@ -21,7 +21,7 @@ class SubscriptionMail {
         email: user.email,
         date: format(
           parseISO(meetup.date),
-          "'dia' dd 'de' MMMM', às' H:mm'h'",
+          "'Day' dd 'of' MMMM', at' H:mm'h'",
           { locale: pt }
         ),
       },

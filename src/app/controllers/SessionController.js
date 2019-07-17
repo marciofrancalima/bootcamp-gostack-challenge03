@@ -14,7 +14,7 @@ class SessionController {
       password: Yup.string().required(),
     });
 
-    // Verifica se os dados são válidos para iniciar a sessão
+    // Checks if the data is valid to start the session
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Preencha os dados corretamente' });
     }
@@ -23,17 +23,16 @@ class SessionController {
 
     const user = await User.findOne({ where: { email } });
 
-    // Se o usuário não estiver cadastrado
+    // If the user is not registered
     if (!user) {
-      return res.status(401).json({ error: 'Usuário não cadastrado' });
+      return res.status(401).json({ error: 'User is not registered' });
     }
 
-    // Se a senha não for válida
+    // If the password is not valid
     if (!(await user.checkPassword(password))) {
-      return res.status(401).json({ error: 'Senhá inválida' });
+      return res.status(401).json({ error: 'Invalid password' });
     }
 
-    // Se o usuário passar pelas validações
     const { id, name } = user;
 
     return res.json({

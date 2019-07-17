@@ -14,16 +14,16 @@ class UserController {
         .min(6),
     });
 
-    // Verifica se os dados da requisição são válidos
+    // Checks if request data is valid
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Preencha os dados corretamente' });
+      return res.status(400).json({ error: 'Enter the data correctly' });
     }
 
     const userExists = await User.findOne({ where: { email: req.body.email } });
 
-    // Verifica se o usuário já existe
+    // Checks whether the user already exists
     if (userExists) {
-      return res.status(400).json({ error: 'Usuário já existe' });
+      return res.status(400).json({ error: 'User already exists' });
     }
 
     const { id, name, email } = await User.create(req.body);
@@ -50,28 +50,28 @@ class UserController {
       ),
     });
 
-    // Verifica se os campos foram preenchidos corretamente
+    // Checks if fields are entered correctly
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Preencha os dados corretamente' });
+      return res.status(400).json({ error: 'Enter the data correctly' });
     }
 
     const { email, oldPassword } = req.body;
     const user = await User.findByPk(req.userId);
 
-    // Verifica se o usuário quer alterar o email
+    // Checks if user wants to change email
     if (email !== user.email) {
-      // Procura no banco de dados se tem algum usuário com o email informado
+      // Search in the database if there are any users with the given email
       const userExists = await User.findOne({ where: { email } });
 
-      // Verifica se o email que o usuário quer alterar já existe
+      // Checks that the email that the user wants to change already exists
       if (userExists) {
-        return res.status(400).json({ error: 'Usuário já existe' });
+        return res.status(400).json({ error: 'User already exists' });
       }
     }
 
-    // Verifica se o usuário quer alterar a senha e se informou o old correto
+    // Checks if user wants to change password and if old password is entered correctly
     if (oldPassword && !(await user.checkPassword(oldPassword))) {
-      return res.status(401).json({ error: 'Senha inválida' });
+      return res.status(401).json({ error: 'Invalid password' });
     }
 
     const { id, name } = await user.update(req.body);

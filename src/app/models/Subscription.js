@@ -3,15 +3,15 @@ import { Model } from 'sequelize';
 class Subscription extends Model {
   static init(sequelize) {
     /**
-     * Como não há campos a serem gravados no banco além dos relacionamentos,
-     * o primeiro argumento é setado como um objeto vazio.
+     * Since there are no fields to write to the database other than relationships,
+     * the first argument is set as an empty object.
      */
     super.init({}, { sequelize });
 
     return this;
   }
 
-  // Associando os relacionamentos de Subscription com os models
+  // Associating Subscription relationships with models
   static associate(models) {
     this.belongsTo(models.Meetup, { foreignKey: 'meetup_id' });
     this.belongsTo(models.User, { foreignKey: 'user_id' });
