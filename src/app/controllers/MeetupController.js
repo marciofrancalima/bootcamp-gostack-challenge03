@@ -1,11 +1,5 @@
 import * as Yup from 'yup';
-import {
-  isBefore,
-  startOfHour,
-  parseISO,
-  startOfDay,
-  endOfDay,
-} from 'date-fns';
+import { isBefore, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { Op } from 'sequelize';
 
 import Meetup from '../models/Meetup';
@@ -14,8 +8,31 @@ import File from '../models/File';
 
 class MeetupController {
   async index(req, res) {
-    const where = {};
     const page = req.query.page || 1;
+    const per_page = req.query.per_page || 10;
+    const { id } = req.params;
+
+    if (id) {
+      const meetup = await Meetup.findOne({
+        where: { id },
+        attributes: ['id', 'title', 'description', 'location', 'date'],
+        include: [
+          {
+            model: File,
+            as: 'banner',
+            attributes: ['id', 'path', 'url'],
+          },
+        ],
+      });
+
+      if (meetup) {
+        return res.json(meetup);
+      }
+
+      return res.status(400).json({ message: 'Meetup não encontrado' });
+    }
+
+    const where = {};
 
     // If the date has passed, set filter
     if (req.query.date) {
@@ -26,9 +43,10 @@ class MeetupController {
       };
     }
 
-    const meetups = await Meetup.findAll({
+    const meetups = await Meetup.findAndCountAll({
       where,
       attributes: ['id', 'title', 'description', 'location', 'date'],
+      order: ['date'],
       include: [
         {
           model: User,
@@ -36,11 +54,12 @@ class MeetupController {
         },
         {
           model: File,
+          as: 'banner',
           attributes: ['id', 'path', 'url'],
         },
       ],
-      limit: 10,
-      offset: (page - 1) * 10,
+      limit: per_page,
+      offset: (page - 1) * per_page,
     });
 
     return res.json(meetups);
@@ -48,25 +67,23 @@ class MeetupController {
 
   async store(req, res) {
     const schema = Yup.object().shape({
-      title: Yup.string().required('Title is required'),
-      file_id: Yup.number().required('File is required'),
-      description: Yup.string().required('Description is required'),
-      location: Yup.string().required('Location is required'),
-      date: Yup.date().required('Date is required'),
+      title: Yup.string().required('Título é obrigatório'),
+      file_id: Yup.number().required('Uma imagem é obrigatória'),
+      description: Yup.string().required('Descrição é obrigatório'),
+      location: Yup.string().required('Local é obrigatório'),
+      date: Yup.date().required('Data é obrigatória'),
     });
 
     // Checks if the given data is valid
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Enter the data correctly' });
+      return res.status(400).json({ message: 'Digite os dados corretamente' });
     }
 
     // You can not register meetup with a date that has passed
-    const startHour = startOfHour(parseISO(req.body.date));
-
-    if (isBefore(startHour, new Date())) {
-      return res
-        .status(400)
-        .json({ error: 'The date you are trying to register has passed' });
+    if (isBefore(parseISO(req.body.date), new Date())) {
+      return res.status(400).json({
+        message: 'Essa data já passou',
+      });
     }
 
     // Get the user logged in
@@ -86,24 +103,19 @@ class MeetupController {
 
     // Checks if meetup exists
     if (!meetup) {
-      return res.status(400).json({ error: 'Meetup does not exists' });
+      return res.status(400).json({ message: 'Meetup não encontrado' });
     }
 
     // Checks if the meetup belongs to the logged in user
     if (meetup.user_id !== req.userId) {
-      return res.status(401).json({ error: 'Unauthorized access' });
-    }
-
-    // Can not edit meetup with date that has passed
-    if (isBefore(parseISO(req.body.date), new Date())) {
-      return res.status(400).json({ error: 'Invalid date' });
+      return res.status(401).json({ message: 'Acesso não permitido' });
     }
 
     // You can not edit a meetup that has passed
     if (meetup.past) {
-      return res
-        .status(400)
-        .json({ error: 'Can not edit meetup that has passed' });
+      return res.status(400).json({
+        message: 'Esse meetup já foi realizado e não pode ser alterado',
+      });
     }
 
     await meetup.update(req.body);
@@ -117,24 +129,24 @@ class MeetupController {
 
     // Checks if meetup exists
     if (!meetup) {
-      return res.status(400).json({ error: 'Meetup does not exists' });
+      return res.status(400).json({ message: 'Meetup não encontrado' });
     }
 
     // Checks if the meetup belongs to the logged in user
     if (meetup.user_id !== req.userId) {
-      return res.status(401).json({ error: 'Unauthorized access' });
+      return res.status(401).json({ message: 'Acesso não permitido' });
     }
 
     // Checks if user is trying to delete a meetup already done
     if (meetup.past) {
       return res
         .status(400)
-        .json({ error: 'Can not delete completed meetups' });
+        .json({ message: 'Meetup que já aconteceu não pode ser excluído' });
     }
 
     await meetup.destroy();
 
-    return res.json({ message: 'Successfully deleted Meetup' });
+    return res.json({ message: 'Meetup excluído com sucesso' });
   }
 }
 

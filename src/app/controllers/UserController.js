@@ -16,14 +16,14 @@ class UserController {
 
     // Checks if request data is valid
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Enter the data correctly' });
+      return res.status(400).json({ message: 'Digite os dados corretamente' });
     }
 
     const userExists = await User.findOne({ where: { email: req.body.email } });
 
     // Checks whether the user already exists
     if (userExists) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ message: 'Usuário já está cadastrado' });
     }
 
     const { id, name, email } = await User.create(req.body);
@@ -52,7 +52,9 @@ class UserController {
 
     // Checks if fields are entered correctly
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Enter the data correctly' });
+      return res
+        .status(400)
+        .json({ message: 'Preencha os dados corretamente' });
     }
 
     const { email, oldPassword } = req.body;
@@ -65,13 +67,15 @@ class UserController {
 
       // Checks that the email that the user wants to change already exists
       if (userExists) {
-        return res.status(400).json({ error: 'User already exists' });
+        return res.status(400).json({
+          message: 'Esse e-mail já está cadastrado. Escolha outro!',
+        });
       }
     }
 
     // Checks if user wants to change password and if old password is entered correctly
     if (oldPassword && !(await user.checkPassword(oldPassword))) {
-      return res.status(401).json({ error: 'Invalid password' });
+      return res.status(401).json({ message: 'Senha atual inválida' });
     }
 
     const { id, name } = await user.update(req.body);

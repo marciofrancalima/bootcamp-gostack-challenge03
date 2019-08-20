@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 
 import Subscription from '../models/Subscription';
 import Meetup from '../models/Meetup';
+import File from '../models/File';
 
 import User from '../models/User';
 
@@ -24,6 +25,17 @@ class SubscriptionController {
             },
           },
           attributes: ['id', 'title', 'description', 'location', 'date'],
+          include: [
+            {
+              model: User,
+              attributes: ['id', 'name', 'email'],
+            },
+            {
+              model: File,
+              as: 'banner',
+              attributes: ['id', 'path', 'url'],
+            },
+          ],
         },
       ],
       order: [[Meetup, 'date']],
@@ -39,21 +51,19 @@ class SubscriptionController {
 
     // Checks if meetup exists
     if (!meetup) {
-      return res.status(400).json({ error: 'Enter a valid meetup' });
+      return res.status(400).json({ message: 'Esse meetup não existe' });
     }
 
     // Checks if the meetup belongs to the logged in user
     if (meetup.user_id === req.userId) {
-      return res
-        .status(400)
-        .json({ error: 'You can not sign up for the meetup that organizes' });
+      return res.status(400).json({
+        message: 'Você não pode se inscrever nos seus próprios meetups',
+      });
     }
 
     // Checks if meetup has already happened
     if (meetup.past) {
-      return res
-        .status(400)
-        .json({ error: 'This meetup has already happened' });
+      return res.status(400).json({ message: 'Esse meetup já aconteceu' });
     }
 
     // Checks if user is already enrolled in meetup
@@ -65,7 +75,7 @@ class SubscriptionController {
     });
 
     if (checkSubscription) {
-      return res.status(400).json({ error: 'You are already registered' });
+      return res.status(400).json({ message: 'Você já está inscrito' });
     }
 
     // Checks if user is enrolled in a meetup on the same date/time
@@ -81,7 +91,7 @@ class SubscriptionController {
 
     if (sameTime) {
       return res.status(400).json({
-        error: 'You are already enrolled at this time in another meetup',
+        message: 'Você já está inscrito no mesmo horário em outro meetup',
       });
     }
 
@@ -105,6 +115,22 @@ class SubscriptionController {
     });
 
     return res.json(subscription);
+  }
+
+  async delete(req, res) {
+    // Search subscription in the database
+    const subscription = await Subscription.findByPk(req.params.id);
+
+    // Checks if subscription exists
+    if (!subscription) {
+      return res.status(400).json({
+        message: 'Você não está inscrito nesse meetup',
+      });
+    }
+
+    await subscription.destroy();
+
+    return res.json({ message: 'Inscrição cancelada com sucesso' });
   }
 }
 

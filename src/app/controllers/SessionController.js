@@ -16,7 +16,9 @@ class SessionController {
 
     // Checks if the data is valid to start the session
     if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Preencha os dados corretamente' });
+      return res
+        .status(400)
+        .json({ message: 'Preencha os dados corretamente' });
     }
 
     const { email, password } = req.body;
@@ -25,12 +27,12 @@ class SessionController {
 
     // If the user is not registered
     if (!user) {
-      return res.status(401).json({ error: 'User is not registered' });
+      return res.status(401).json({ message: 'Usuário ou senha inválido' });
     }
 
     // If the password is not valid
     if (!(await user.checkPassword(password))) {
-      return res.status(401).json({ error: 'Invalid password' });
+      return res.status(401).json({ message: 'Usuário ou senha inválido' });
     }
 
     const { id, name } = user;
