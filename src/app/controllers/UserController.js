@@ -68,7 +68,7 @@ class UserController {
       // Checks that the email that the user wants to change already exists
       if (userExists) {
         return res.status(400).json({
-          message: 'Esse e-mail já está cadastrado. Escolha outro!',
+          message: 'Usuário já existe!',
         });
       }
     }
