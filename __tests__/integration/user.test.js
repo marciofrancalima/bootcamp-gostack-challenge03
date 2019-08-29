@@ -3,6 +3,7 @@ import request from 'supertest';
 import app from '../../src/app';
 import truncate from '../util/truncate';
 import factory from '../factories';
+import fetchUserAuthorization from '../fetchUserAuthorization';
 
 describe('User', () => {
   beforeEach(async () => {
@@ -104,19 +105,11 @@ describe('User', () => {
   // Update
 
   it('should not be able to update your data without email', async () => {
-    const user = await factory.attrs('User');
-
-    await request(app)
-      .post('/users')
-      .send(user);
-
-    const session = await request(app)
-      .post('/sessions')
-      .send(user);
+    const token = await fetchUserAuthorization();
 
     const updated = await request(app)
       .put('/users')
-      .set('Authorization', `bearer ${session.body.token}`)
+      .set('Authorization', `bearer ${token}`)
       .send({
         name: 'user updated',
         email: null,
