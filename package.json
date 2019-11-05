@@ -18,7 +18,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "lodash.template": "^4.5.0",
-    "mongoose": "^5.6.2",
+    "mongoose": "^5.7.5",
     "multer": "^1.4.1",
     "nodemailer": "^6.2.1",
     "nodemailer-express-handlebars": "^3.0.0",
